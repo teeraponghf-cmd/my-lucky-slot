@@ -3,92 +3,91 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>NONGNUCH 888+ - Withdraw System</title>
+    <title>Matrix 5x5 - Pro Player</title>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700;900&display=swap" rel="stylesheet">
     <style>
-        :root {
-            --gold: #ffcf40; --red: #ff4444; --bg: #050505; --purple: #8a2be2; --neon-blue: #00f2ff; --green: #2ecc71;
-        }
+        :root { --gold: #ffcf40; --red: #ff4444; --bg: #050505; --purple: #a020f0; --blue: #00f2ff; --green: #2ecc71; }
         * { box-sizing: border-box; font-family: 'Montserrat', sans-serif; -webkit-tap-highlight-color: transparent; }
-        body { 
-            background: var(--bg); color: white; display: flex; flex-direction: column; align-items: center; 
-            min-height: 100vh; margin: 0; padding: 10px; touch-action: manipulation; transition: 0.5s; 
-        }
-        body.freespin-mode { background: radial-gradient(circle, #200040, #050505); }
+        body { background: var(--bg); color: white; margin: 0; display: flex; flex-direction: column; align-items: center; min-height: 100vh; padding: 10px; touch-action: manipulation; }
 
-        /* Dashboard */
-        .header { width: 100%; max-width: 400px; display: flex; gap: 8px; margin-bottom: 10px; }
-        .stat-box { 
-            background: rgba(255,255,255,0.05); flex: 1; padding: 12px; border-radius: 15px; 
-            text-align: center; border: 1px solid rgba(255,215,0,0.2); position: relative;
-        }
-        .stat-label { font-size: 0.65rem; color: #888; text-transform: uppercase; }
-        .stat-val { font-size: 1.2rem; font-weight: 900; color: var(--gold); }
+        /* Level Bar System */
+        .level-container { width: 100%; max-width: 420px; background: rgba(255,255,255,0.05); padding: 10px; border-radius: 12px; margin-bottom: 10px; border: 1px solid #333; }
+        .level-info { display: flex; justify-content: space-between; font-size: 0.7rem; margin-bottom: 5px; font-weight: bold; }
+        .exp-bar-bg { width: 100%; height: 6px; background: #000; border-radius: 3px; overflow: hidden; }
+        .exp-bar-fill { width: 0%; height: 100%; background: linear-gradient(90deg, var(--blue), var(--purple)); transition: 0.5s; }
+
+        /* Header & Dashboard */
+        .header { width: 100%; max-width: 420px; display: flex; gap: 8px; margin-bottom: 10px; }
+        .stat-box { background: #111; flex: 1; padding: 12px; border-radius: 15px; text-align: center; border: 1px solid rgba(255,215,0,0.2); position: relative; }
+        .stat-label { font-size: 0.6rem; color: #888; text-transform: uppercase; display: block; margin-bottom: 2px; }
+        .stat-val { font-size: 1.1rem; font-weight: 900; color: var(--gold); }
         
-        /* ปุ่มจัดการเงิน */
-        .money-controls { position: absolute; right: 5px; top: 50%; transform: translateY(-50%); display: flex; flex-direction: column; gap: 4px; }
-        .btn-money { 
-            border: none; border-radius: 4px; width: 22px; height: 20px; 
-            font-weight: bold; font-size: 14px; cursor: pointer; display: flex; align-items: center; justify-content: center;
-        }
-        .btn-plus { background: var(--gold); color: #000; box-shadow: 0 0 5px var(--gold); }
-        .btn-minus { background: var(--red); color: #fff; box-shadow: 0 0 5px var(--red); }
+        /* เงินปุ่มควบคุม */
+        .wallet-actions { display: flex; justify-content: center; gap: 10px; margin-top: 8px; }
+        .action-btn { border: none; border-radius: 5px; padding: 5px 12px; font-size: 0.7rem; font-weight: bold; cursor: pointer; transition: 0.2s; }
+        .btn-topup { background: var(--gold); color: #000; }
+        .btn-withdraw { background: var(--red); color: #fff; }
 
-        /* Slot Machine Area */
-        .slot-wrapper { 
-            background: #111; padding: 15px; border-radius: 25px; border: 4px solid var(--gold); 
-            width: 100%; max-width: 360px; box-shadow: 0 0 30px rgba(255, 207, 64, 0.2); transition: 0.3s;
-        }
-        .matrix-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; background: #000; padding: 10px; border-radius: 15px; margin-bottom: 15px; }
-        .cell { 
-            background: linear-gradient(180deg, #fff 0%, #bbb 100%); aspect-ratio: 1/1; 
-            border-radius: 10px; display: flex; align-items: center; justify-content: center; 
-            font-size: 40px; color: #000;
-        }
-        .cell.win { background: var(--neon-blue); box-shadow: 0 0 20px var(--neon-blue); animation: win-pulse 0.4s infinite alternate; }
+        /* Matrix Grid 5x5 */
+        .slot-wrapper { background: #111; padding: 10px; border-radius: 20px; border: 4px solid var(--gold); width: 100%; max-width: 420px; box-shadow: 0 0 20px rgba(0,0,0,0.5); }
+        .matrix-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; background: #000; padding: 8px; border-radius: 12px; margin-bottom: 12px; }
+        .cell { background: #fff; aspect-ratio: 1/1; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 24px; color: #000; transition: 0.1s; }
+        .cell.win { background: var(--blue); box-shadow: 0 0 15px var(--blue); animation: win-pulse 0.4s infinite alternate; }
 
         /* Controls */
-        .bet-row { display: flex; justify-content: center; gap: 8px; margin-bottom: 15px; }
-        .bet-btn { background: #222; color: #777; border: 2px solid #333; padding: 10px 15px; border-radius: 20px; font-weight: 900; cursor: pointer; }
+        .bet-row { display: flex; justify-content: center; gap: 5px; margin-bottom: 15px; flex-wrap: wrap; }
+        .bet-btn { background: #222; color: #777; border: 1px solid #333; padding: 8px 12px; border-radius: 15px; font-weight: 900; cursor: pointer; font-size: 0.75rem; }
         .bet-btn.active { background: var(--gold); color: #000; border-color: #fff; }
-        
-        #spinBtn { width: 100%; padding: 20px; border-radius: 50px; border: none; background: linear-gradient(to bottom, #ff5555, #aa0000); color: white; font-size: 1.6rem; font-weight: 900; box-shadow: 0 6px 0 #700; cursor: pointer; }
+        .bet-btn:disabled { opacity: 0.2; cursor: not-allowed; }
+
+        #spinBtn { width: 100%; padding: 18px; border-radius: 50px; border: none; background: linear-gradient(to bottom, #ff5555, #aa0000); color: white; font-size: 1.5rem; font-weight: 900; box-shadow: 0 6px 0 #700; cursor: pointer; }
+        #spinBtn:active { transform: translateY(4px); box-shadow: 0 2px 0 #700; }
         #spinBtn:disabled { background: #444; box-shadow: none; color: #888; transform: none; }
 
-        /* Modal */
+        /* Modals */
         .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.9); display: none; justify-content: center; align-items: center; z-index: 100; backdrop-filter: blur(8px); }
         .modal { background: #1a1a1a; width: 90%; max-width: 320px; padding: 25px; border-radius: 25px; border: 2px solid var(--gold); text-align: center; }
-        
-        #msg { text-align: center; font-weight: 900; font-size: 1.2rem; min-height: 35px; margin-top: 15px; color: var(--gold); }
-        
-        @keyframes win-pulse { to { transform: scale(1.1); } }
+        .topup-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 15px 0; }
+        .opt-btn { background: #333; color: white; border: 1px solid #444; padding: 12px; border-radius: 10px; font-weight: bold; cursor: pointer; }
+
+        #msg { text-align: center; font-weight: 900; font-size: 1.1rem; min-height: 35px; margin-top: 15px; color: var(--gold); }
+        @keyframes win-pulse { to { transform: scale(1.08); } }
     </style>
 </head>
 <body>
 
-    <h2 id="titleText" style="color:var(--gold); margin: 10px 0; letter-spacing: 2px;">NONGNUCH 888+</h2>
+    <h2 style="color:var(--gold); margin: 5px 0; font-style: italic;">MATRIX 5x5 PRO</h2>
+
+    <div class="level-container">
+        <div class="level-info">
+            <span>LV. <span id="lvDisp" style="color:var(--blue)">1</span></span>
+            <span id="expDisp">0 / 200 EXP</span>
+        </div>
+        <div class="exp-bar-bg"><div class="exp-bar-fill" id="expFill"></div></div>
+    </div>
 
     <div class="header">
         <div class="stat-box">
-            <span class="stat-label">เครดิตคงเหลือ</span><br>
-            <span class="stat-val" id="balDisp">1,000</span>
-            <div class="money-controls">
-                <button class="btn-money btn-plus" onclick="openTopup()">+</button>
-                <button class="btn-money btn-minus" onclick="openWithdraw()">-</button>
+            <span class="stat-label">เครดิต</span>
+            <span class="stat-val" id="balDisp">300</span>
+            <div class="wallet-actions">
+                <button class="action-btn btn-topup" onclick="openTopup()">เติม</button>
+                <button class="action-btn btn-withdraw" onclick="openWithdraw()">ถอน</button>
             </div>
         </div>
         <div class="stat-box">
-            <span class="stat-label">แจ็คพอตสะสม</span><br>
+            <span class="stat-label">แจ็คพอต</span>
             <span class="stat-val" id="jackDisp">5,000</span>
         </div>
     </div>
 
-    <div class="slot-wrapper" id="wrapper">
+    <div class="slot-wrapper">
         <div class="matrix-grid" id="grid"></div>
         <div class="bet-row">
-            <button class="bet-btn" onclick="setBet(10, 1.0, 0.05, this)">10</button>
-            <button class="bet-btn active" onclick="setBet(50, 1.5, 0.10, this)">50</button>
-            <button class="bet-btn" onclick="setBet(100, 2.5, 0.15, this)">100</button>
+            <button class="bet-btn" onclick="setBet(5, 0.8, 0.02, this)">5</button>
+            <button class="bet-btn active" onclick="setBet(10, 1.0, 0.05, this)">10</button>
+            <button class="bet-btn" id="bet50" onclick="setBet(50, 1.5, 0.10, this)">50</button>
+            <button class="bet-btn" id="bet100" onclick="setBet(100, 2.5, 0.15, this)" title="Unlock at LV.3">100🔒</button>
         </div>
         <button id="spinBtn" onclick="handleSpin()">SPIN</button>
     </div>
@@ -97,42 +96,44 @@
 
     <div class="overlay" id="topupModal">
         <div class="modal">
-            <h3 style="color:var(--gold)">💰 เติมเครดิต</h3>
-            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin:20px 0;">
-                <button style="padding:15px; border-radius:10px; background:#333; color:white; border:none;" onclick="addMoney(100)">100</button>
-                <button style="padding:15px; border-radius:10px; background:#333; color:white; border:none;" onclick="addMoney(500)">500</button>
-                <button style="padding:15px; border-radius:10px; background:#333; color:white; border:none;" onclick="addMoney(1000)">1000</button>
-                <button style="padding:15px; border-radius:10px; background:#333; color:white; border:none;" onclick="addMoney(5000)">5000</button>
+            <h3 style="color:var(--gold)">💰 เติมเครดิตจำลอง</h3>
+            <div class="topup-grid">
+                <button class="opt-btn" onclick="addMoney(100)">100</button>
+                <button class="opt-btn" onclick="addMoney(500)">500</button>
+                <button class="opt-btn" onclick="addMoney(1000)">1000</button>
+                <button class="opt-btn" onclick="addMoney(5000)">5000</button>
             </div>
-            <p onclick="closeModal()" style="color:#666; cursor:pointer;">ปิด</p>
+            <p onclick="closeModal()" style="color:#666; cursor:pointer;">ยกเลิก</p>
         </div>
     </div>
 
     <div class="overlay" id="withdrawModal">
         <div class="modal">
-            <h3 style="color:var(--red)">💸 ถอนเครดิต</h3>
-            <p style="font-size:0.8rem; color:#888;">กรุณาระบุจำนวนที่จะถอน (จำลอง)</p>
-            <input type="number" id="withdrawInput" style="width:100%; padding:15px; border-radius:10px; border:none; margin:10px 0; font-size:1.2rem; text-align:center;" placeholder="ใส่จำนวนเงิน">
-            <button style="width:100%; padding:15px; border-radius:10px; background:var(--green); color:white; border:none; font-weight:bold;" onclick="processWithdraw()">ยืนยันการถอน</button>
-            <p onclick="closeModal()" style="color:#666; cursor:pointer; margin-top:15px;">ยกเลิก</p>
+            <h3 style="color:var(--red)">💸 ถอนเงิน</h3>
+            <input type="number" id="withdrawInput" style="width:100%; padding:15px; border-radius:10px; border:none; margin:10px 0; font-size:1.2rem; text-align:center;" placeholder="จำนวน">
+            <button class="opt-btn" style="background:var(--green); width:100%; color:black;" onclick="processWithdraw()">ยืนยันการถอน</button>
+            <p onclick="closeModal()" style="color:#666; cursor:pointer; margin-top:10px;">ยกเลิก</p>
         </div>
     </div>
 
     <script>
         let audioCtx = null;
         function initAudio() { if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)(); if(audioCtx.state === 'suspended') audioCtx.resume(); }
-        function playSnd(f, d, v=0.1) { if(!audioCtx) return; const o=audioCtx.createOscillator(), g=audioCtx.createGain(); o.frequency.value=f; g.gain.setValueAtTime(v, audioCtx.currentTime); o.connect(g); g.connect(audioCtx.destination); o.start(); o.stop(audioCtx.currentTime+d); }
+        function playSnd(f, d, v=0.08) { if(!audioCtx) return; const o=audioCtx.createOscillator(), g=audioCtx.createGain(); o.frequency.value=f; g.gain.setValueAtTime(v, audioCtx.currentTime); o.connect(g); g.connect(audioCtx.destination); o.start(); o.stop(audioCtx.currentTime+d); }
 
-        const config = [{s:'🍒',m:5,w:40},{s:'🍋',m:12,w:22},{s:'🍉',m:25,w:15},{s:'💎',m:100,w:10},{s:'7️⃣',m:500,w:5},{s:'🌟',m:0,w:8}];
-        const paylines = [[0,1,2],[3,4,5],[6,7,8],[0,4,8],[2,4,6]];
-        
-        let balance = parseInt(localStorage.getItem('mx_bal_w')) || 1000;
-        let jackpot = parseInt(localStorage.getItem('mx_jack_w')) || 5000;
-        let currentBet = 50, betBonus = 1.5, jackRate = 0.10;
+        const config = [{s:'🍒',m:5,w:40},{s:'🍋',m:10,w:25},{s:'🍉',m:20,w:15},{s:'💎',m:50,w:10},{s:'7️⃣',m:200,w:5},{s:'🌟',m:0,w:5}];
+        const paylines = [[5,6,7,8,9], [10,11,12,13,14], [15,16,17,18,19], [0,6,12,18,24], [4,8,12,16,20]];
+
+        // ข้อมูลผู้เล่น - เติมเริ่มแรก 300
+        let balance = parseInt(localStorage.getItem('v6_bal')) ?? 300;
+        let jackpot = parseInt(localStorage.getItem('v6_jack')) || 5000;
+        let level = parseInt(localStorage.getItem('v6_lv')) || 1;
+        let exp = parseInt(localStorage.getItem('v6_exp')) || 0;
+        let currentBet = 10, betBonus = 1.0, jackRate = 0.05;
 
         const cellEls = [];
         const grid = document.getElementById('grid');
-        for(let i=0; i<9; i++) {
+        for(let i=0; i<25; i++) {
             const c = document.createElement('div');
             c.className = 'cell'; c.innerText = '💎';
             grid.appendChild(c); cellEls.push(c);
@@ -141,7 +142,20 @@
         function updateUI() {
             document.getElementById('balDisp').innerText = Math.floor(balance).toLocaleString();
             document.getElementById('jackDisp').innerText = Math.floor(jackpot).toLocaleString();
-            localStorage.setItem('mx_bal_w', balance); localStorage.setItem('mx_jack_w', jackpot);
+            
+            const nextExp = level * 200;
+            document.getElementById('lvDisp').innerText = level;
+            document.getElementById('expDisp').innerText = `${exp} / ${nextExp} EXP`;
+            document.getElementById('expFill').style.width = (exp / nextExp * 100) + "%";
+            
+            // Unlock system
+            document.getElementById('bet100').disabled = level < 3;
+            if(level >= 3) document.getElementById('bet100').innerText = "100";
+
+            localStorage.setItem('v6_bal', balance);
+            localStorage.setItem('v6_jack', jackpot);
+            localStorage.setItem('v6_lv', level);
+            localStorage.setItem('v6_exp', exp);
         }
 
         function setBet(v, b, j, btn) {
@@ -154,21 +168,22 @@
             initAudio();
             if(balance < currentBet) { openTopup(); return; }
             balance -= currentBet; jackpot += (currentBet * jackRate);
-            updateUI();
+            exp += Math.floor(currentBet / 2);
+            checkLevelUp(); updateUI();
             
             const btn = document.getElementById('spinBtn');
             btn.disabled = true;
             document.getElementById('msg').innerText = "";
             cellEls.forEach(c => c.className = 'cell');
 
-            for(let i=0; i<18; i++) {
+            for(let i=0; i<15; i++) {
                 cellEls.forEach(c => c.innerText = config[Math.floor(Math.random()*6)].s);
-                playSnd(200 + (i*15), 0.04, 0.05);
+                playSnd(200 + (i*15), 0.03, 0.05);
                 await new Promise(r => setTimeout(r, 60));
             }
 
             const res = [];
-            for(let i=0; i<9; i++) {
+            for(let i=0; i<25; i++) {
                 const rand = Math.random() * 100;
                 let sum = 0, pick = config[0];
                 for(let s of config) { sum += s.w; if(rand <= sum) { pick = s; break; } }
@@ -177,39 +192,37 @@
 
             let winSum = 0;
             paylines.forEach(line => {
-                if(res[line[0]].s === res[line[1]].s && res[line[1]].s === res[line[2]].s && res[line[0]].s !== '🌟') {
+                if(res[line[0]].s === res[line[1]].s && res[line[1]].s === res[line[2]].s && res[line[2]].s === res[line[3]].s && res[line[3]].s === res[line[4]].s) {
                     line.forEach(idx => cellEls[idx].classList.add('win'));
-                    winSum += ((currentBet / 5) * res[line[0]].m) * betBonus;
+                    winSum += (currentBet * res[line[0]].m) * betBonus;
                 }
             });
 
             if(winSum > 0) {
                 balance += winSum;
                 document.getElementById('msg').innerText = "WIN: +" + Math.floor(winSum).toLocaleString();
-                playSnd(600, 0.3);
+                playSnd(800, 0.3);
             }
             btn.disabled = false; updateUI();
         }
 
-        // ระบบการเงิน
+        function checkLevelUp() {
+            const nextExp = level * 200;
+            if(exp >= nextExp) {
+                exp -= nextExp; level++; balance += 300;
+                alert("🆙 LEVEL UP! เลเวล " + level + " รับฟรี 300 ฿");
+                playSnd(1200, 0.5);
+            }
+        }
+
         function openTopup() { document.getElementById('topupModal').style.display='flex'; initAudio(); }
         function openWithdraw() { document.getElementById('withdrawModal').style.display='flex'; initAudio(); }
         function closeModal() { document.querySelectorAll('.overlay').forEach(o => o.style.display='none'); }
-
-        function addMoney(v) {
-            balance += v; updateUI(); closeModal(); playSnd(1200, 0.2);
-        }
-
+        function addMoney(v) { balance += v; updateUI(); closeModal(); playSnd(1200, 0.1); }
         function processWithdraw() {
             const amt = parseInt(document.getElementById('withdrawInput').value);
-            if(!amt || amt <= 0) { alert("กรุณาใส่จำนวนเงินที่ถูกต้อง"); return; }
-            if(amt > balance) { alert("ยอดเงินไม่พอถอนครับ!"); return; }
-
-            balance -= amt;
-            updateUI();
-            alert("💸 ถอนเงินสำเร็จ! จำนวน " + amt.toLocaleString() + " บาท (จำลองการโอนเข้าบัญชี)");
-            closeModal();
-            playSnd(150, 0.5); // เสียงถอนเงินทุ้มๆ
+            if(!amt || amt <= 0 || amt > balance) { alert("ยอดเงินไม่ถูกต้อง"); return; }
+            balance -= amt; updateUI(); alert("ถอนสำเร็จ " + amt + " ฿ (จำลอง)"); closeModal();
         }
 
         updateUI();
