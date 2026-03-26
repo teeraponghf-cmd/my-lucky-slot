@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Matrix 5x5 - Pro Player</title>
+    <title>Matrix 5x5 - Pro Stable</title>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700;900&display=swap" rel="stylesheet">
     <style>
         :root { --gold: #ffcf40; --red: #ff4444; --bg: #050505; --purple: #a020f0; --blue: #00f2ff; --green: #2ecc71; }
@@ -22,9 +22,9 @@
         .stat-label { font-size: 0.6rem; color: #888; text-transform: uppercase; display: block; margin-bottom: 2px; }
         .stat-val { font-size: 1.1rem; font-weight: 900; color: var(--gold); }
         
-        /* เงินปุ่มควบคุม */
+        /* Wallet Controls */
         .wallet-actions { display: flex; justify-content: center; gap: 10px; margin-top: 8px; }
-        .action-btn { border: none; border-radius: 5px; padding: 5px 12px; font-size: 0.7rem; font-weight: bold; cursor: pointer; transition: 0.2s; }
+        .action-btn { border: none; border-radius: 5px; padding: 6px 15px; font-size: 0.75rem; font-weight: bold; cursor: pointer; transition: 0.2s; }
         .btn-topup { background: var(--gold); color: #000; }
         .btn-withdraw { background: var(--red); color: #fff; }
 
@@ -96,7 +96,7 @@
 
     <div class="overlay" id="topupModal">
         <div class="modal">
-            <h3 style="color:var(--gold)">💰 เติมเครดิตจำลอง</h3>
+            <h3 style="color:var(--gold)">💰 เติมเครดิต</h3>
             <div class="topup-grid">
                 <button class="opt-btn" onclick="addMoney(100)">100</button>
                 <button class="opt-btn" onclick="addMoney(500)">500</button>
@@ -110,25 +110,39 @@
     <div class="overlay" id="withdrawModal">
         <div class="modal">
             <h3 style="color:var(--red)">💸 ถอนเงิน</h3>
-            <input type="number" id="withdrawInput" style="width:100%; padding:15px; border-radius:10px; border:none; margin:10px 0; font-size:1.2rem; text-align:center;" placeholder="จำนวน">
-            <button class="opt-btn" style="background:var(--green); width:100%; color:black;" onclick="processWithdraw()">ยืนยันการถอน</button>
+            <input type="number" id="withdrawInput" style="width:100%; padding:15px; border-radius:10px; border:none; margin:10px 0; font-size:1.2rem; text-align:center;" placeholder="ระบุจำนวน">
+            <button class="opt-btn" style="background:var(--green); width:100%; color:black;" onclick="processWithdraw()">ยืนยันถอน</button>
             <p onclick="closeModal()" style="color:#666; cursor:pointer; margin-top:10px;">ยกเลิก</p>
         </div>
     </div>
 
     <script>
         let audioCtx = null;
-        function initAudio() { if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)(); if(audioCtx.state === 'suspended') audioCtx.resume(); }
-        function playSnd(f, d, v=0.08) { if(!audioCtx) return; const o=audioCtx.createOscillator(), g=audioCtx.createGain(); o.frequency.value=f; g.gain.setValueAtTime(v, audioCtx.currentTime); o.connect(g); g.connect(audioCtx.destination); o.start(); o.stop(audioCtx.currentTime+d); }
+        function initAudio() { 
+            if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)(); 
+            if(audioCtx.state === 'suspended') audioCtx.resume(); 
+        }
+        function playSnd(f, d, v=0.08) { 
+            if(!audioCtx) return; 
+            const o=audioCtx.createOscillator(), g=audioCtx.createGain(); 
+            o.frequency.value=f; g.gain.setValueAtTime(v, audioCtx.currentTime); 
+            o.connect(g); g.connect(audioCtx.destination); 
+            o.start(); o.stop(audioCtx.currentTime+d); 
+        }
 
         const config = [{s:'🍒',m:5,w:40},{s:'🍋',m:10,w:25},{s:'🍉',m:20,w:15},{s:'💎',m:50,w:10},{s:'7️⃣',m:200,w:5},{s:'🌟',m:0,w:5}];
         const paylines = [[5,6,7,8,9], [10,11,12,13,14], [15,16,17,18,19], [0,6,12,18,24], [4,8,12,16,20]];
 
-        // ข้อมูลผู้เล่น - เติมเริ่มแรก 300
-        let balance = parseInt(localStorage.getItem('v6_bal')) ?? 300;
-        let jackpot = parseInt(localStorage.getItem('v6_jack')) || 5000;
-        let level = parseInt(localStorage.getItem('v6_lv')) || 1;
-        let exp = parseInt(localStorage.getItem('v6_exp')) || 0;
+        // --- FIXED NaN LOGIC ---
+        function getSavedVal(key, def) {
+            let val = parseInt(localStorage.getItem(key));
+            return isNaN(val) ? def : val;
+        }
+
+        let balance = getSavedVal('v7_bal', 300);
+        let jackpot = getSavedVal('v7_jack', 5000);
+        let level = getSavedVal('v7_lv', 1);
+        let exp = getSavedVal('v7_exp', 0);
         let currentBet = 10, betBonus = 1.0, jackRate = 0.05;
 
         const cellEls = [];
@@ -140,6 +154,9 @@
         }
 
         function updateUI() {
+            // ดักควาย NaN รอบสุดท้ายก่อนแสดงผล
+            if(isNaN(balance)) balance = 300;
+            
             document.getElementById('balDisp').innerText = Math.floor(balance).toLocaleString();
             document.getElementById('jackDisp').innerText = Math.floor(jackpot).toLocaleString();
             
@@ -148,14 +165,13 @@
             document.getElementById('expDisp').innerText = `${exp} / ${nextExp} EXP`;
             document.getElementById('expFill').style.width = (exp / nextExp * 100) + "%";
             
-            // Unlock system
             document.getElementById('bet100').disabled = level < 3;
             if(level >= 3) document.getElementById('bet100').innerText = "100";
 
-            localStorage.setItem('v6_bal', balance);
-            localStorage.setItem('v6_jack', jackpot);
-            localStorage.setItem('v6_lv', level);
-            localStorage.setItem('v6_exp', exp);
+            localStorage.setItem('v7_bal', balance);
+            localStorage.setItem('v7_jack', jackpot);
+            localStorage.setItem('v7_lv', level);
+            localStorage.setItem('v7_exp', exp);
         }
 
         function setBet(v, b, j, btn) {
@@ -218,11 +234,19 @@
         function openTopup() { document.getElementById('topupModal').style.display='flex'; initAudio(); }
         function openWithdraw() { document.getElementById('withdrawModal').style.display='flex'; initAudio(); }
         function closeModal() { document.querySelectorAll('.overlay').forEach(o => o.style.display='none'); }
-        function addMoney(v) { balance += v; updateUI(); closeModal(); playSnd(1200, 0.1); }
+        
+        function addMoney(v) { 
+            if(isNaN(balance)) balance = 0;
+            balance += v; 
+            updateUI(); 
+            closeModal(); 
+            playSnd(1200, 0.1); 
+        }
+
         function processWithdraw() {
             const amt = parseInt(document.getElementById('withdrawInput').value);
-            if(!amt || amt <= 0 || amt > balance) { alert("ยอดเงินไม่ถูกต้อง"); return; }
-            balance -= amt; updateUI(); alert("ถอนสำเร็จ " + amt + " ฿ (จำลอง)"); closeModal();
+            if(isNaN(amt) || amt <= 0 || amt > balance) { alert("ยอดเงินไม่ถูกต้อง"); return; }
+            balance -= amt; updateUI(); alert("ถอนสำเร็จ " + amt + " ฿"); closeModal();
         }
 
         updateUI();
