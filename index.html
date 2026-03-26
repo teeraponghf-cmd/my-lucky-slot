@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Matrix Slot - Free Spin Edition</title>
+    <style>
+        :root {
+            --gold: #ffcf40;
+            --red: #ff4444;
+            --bg: #050505;
+            --purple: #8a2be2;
+        }
+        
+        * { box-sizing: border-box; font-family: 'Montserrat', sans-serif; -webkit-tap-highlight-color: transparent; }
+        body { background: var(--bg); color: white; display: flex; flex-direction: column; align-items: center; min-height: 100vh; margin: 0; padding: 10px; touch-action: manipulation; transition: background 0.5s; }
+        
+        /* Free Spin Mode Background */
+        body.freespin-mode { background: radial-gradient(circle, #200040, #050505); }
+
+        .header { width: 100%; max-width: 380px; display: flex; gap: 8px; margin-bottom: 10px; }
+        .stat-box { 
+            background: #111; flex: 1; padding: 12px; border-radius: 15px; text-align: center; 
+            border: 1px solid rgba(255,215,0,0.3); position: relative;
+        }
+        .stat-val { font-size: 1.2rem; font-weight: 800; color: var(--gold); }
+        
+        /* Slot Container */
+        .slot-wrapper { 
+            background: #111; padding: 15px; border-radius: 25px; 
+            border: 4px solid var(--gold); width: 100%; max-width: 360px;
+            transition: border-color 0.5s;
+        }
+        .freespin-mode .slot-wrapper { border-color: var(--purple); box-shadow: 0 0 30px var(--purple); }
+
+        .matrix-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; background: #000; padding: 10px; border-radius: 15px; margin-bottom: 15px; }
+        .cell { background: #fff; aspect-ratio: 1/1; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 40px; color: #000; }
+        .cell.win { background: #00ffcc; box-shadow: 0 0 20px #00ffcc; animation: win-pulse 0.4s infinite alternate; }
+        .cell.scatter { animation: scatter-glow 0.5s infinite alternate; border: 3px solid var(--purple); }
+
+        /* Controls */
+        .bet-row { display: flex; justify-content: center; gap: 8px; margin-bottom: 15px; }
+        .bet-btn { background: #222; color: #777; border: 1px solid #333; padding: 10px 15px; border-radius: 20px; font-weight: bold; }
+        .bet-btn.active { background: var(--gold); color: #000; }
+        
+        #spinBtn { width: 100%; padding: 18px; border-radius: 50px; border: none; background: linear-gradient(to bottom, #ff5555, #aa0000); color: white; font-size: 1.5rem; font-weight: 900; box-shadow: 0 6px 0 #700; cursor: pointer; }
+        #spinBtn:disabled { background: #444; box-shadow: none; color: #888; }
+        .freespin-active #spinBtn { background: linear-gradient(to bottom, var(--purple), #400080); box-shadow: 0 6px 0 #200040; }
+
+        #msg { text-align: center; font-weight: 800; font-size: 1.2rem; min-height: 30px; margin-top: 15px; color: var(--gold); }
+        #fsCount { color: var(--purple); font-size: 1.5rem; display: none; margin-bottom: 10px; }
+
+        .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.9); display: none; justify-content: center; align-items: center; z-index: 100; }
+        .modal { background: #1a1a1a; padding: 30px; border-radius: 25px; border: 2px solid var(--gold); width: 80%; max-width: 300px; text-align: center; }
+
+        @keyframes win-pulse { to { transform: scale(1.1); } }
+        @keyframes scatter-glow { from { box-shadow: 0 0 5px var(--purple); } to { box-shadow: 0 0 25px var(--purple); transform: scale(1.05); } }
+    </style>
+</head>
+<body>
+
+    <h2 id="titleText" style="color:var(--gold); margin: 10px 0; letter-spacing: 2px;">Nongnuch 888</h2>
+    <div id="fsCount">FREE SPINS: <span id="fsLeft">0</span></div>
+
+    <div class="header">
+        <div class="stat-box">
+            <span style="font-size:0.7rem; color:#888;">เครดิต</span><br>
+            <span class="stat-val" id="balDisp">1,000</span>
+            <button style="position:absolute; right:5px; top:50%; transform:translateY(-50%); background:var(--gold); border:none; border-radius:50%; width:20px; height:20px; font-weight:bold;" onclick="openTopup()">+</button>
+        </div>
+        <div class="stat-box">
+            <span style="font-size:0.7rem; color:#888;">แจ็คพอต</span><br>
+            <span class="stat-val" id="jackDisp">5,000</span>
+        </div>
+    </div>
+
+    <div class="slot-wrapper" id="wrapper">
+        <div class="matrix-grid" id="grid"></div>
+        <div class="bet-row" id="betControls">
+            <button class="bet-btn" onclick="setBet(10, this)">10</button>
+            <button class="bet-btn active" onclick="setBet(50, this)">50</button>
+            <button class="bet-btn" onclick="setBet(100, this)">100</button>
+        </div>
+        <button id="spinBtn" onclick="handleSpin()">SPIN</button>
+    </div>
+
+    <div id="msg"></div>
+
+    <div class="overlay" id="modal">
+        <div class="modal">
+            <h3 style="color:var(--gold)">เติมเงิน</h3>
+            <button style="width:100%; padding:10px; margin:5px; border-radius:10px; background:#333; color:white;" onclick="addMoney(500)">+ 500 ฿</button>
+            <p onclick="closeTopup()" style="color:#666; cursor:pointer;">ยกเลิก</p>
+        </div>
+    </div>
+
+    <script>
+        let audioCtx = null;
+        function initAudio() { if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)(); if(audioCtx.state === 'suspended') audioCtx.resume(); }
+        function playSnd(f, d, v=0.1) { if(!audioCtx) return; const o=audioCtx.createOscillator(), g=audioCtx.createGain(); o.frequency.value=f; g.gain.setValueAtTime(v, audioCtx.currentTime); o.connect(g); g.connect(audioCtx.destination); o.start(); o.stop(audioCtx.currentTime+d); }
+
+        const symbols = [
+            { s: '🍒', m: 5, w: 40 }, { s: '🍋', m: 10, w: 25 },
+            { s: '🍉', m: 25, w: 15 }, { s: '💎', m: 100, w: 8 },
+            { s: '7️⃣', m: 500, w: 5 }, { s: '🌟', m: 0, w: 7 } // 🌟 คือ Scatter
+        ];
+        const paylines = [[0,1,2],[3,4,5],[6,7,8],[0,4,8],[2,4,6]];
+        
+        let balance = parseInt(localStorage.getItem('fs_bal')) || 1000;
+        let jackpot = parseInt(localStorage.getItem('fs_jack')) || 5000;
+        let currentBet = 50;
+        let freeSpinsLeft = 0;
+        let isFreeSpinMode = false;
+        let totalFSWin = 0;
+
+        const cellEls = [];
+        const grid = document.getElementById('grid');
+        for(let i=0; i<9; i++) {
+            const c = document.createElement('div');
+            c.className = 'cell'; c.innerText = '💎';
+            grid.appendChild(c); cellEls.push(c);
+        }
+
+        function updateUI() {
+            document.getElementById('balDisp').innerText = Math.floor(balance).toLocaleString();
+            document.getElementById('jackDisp').innerText = Math.floor(jackpot).toLocaleString();
+            localStorage.setItem('fs_bal', balance);
+            localStorage.setItem('fs_jack', jackpot);
+        }
+
+        function setBet(v, btn) {
+            if(isFreeSpinMode) return;
+            currentBet = v;
+            document.querySelectorAll('.bet-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            initAudio(); playSnd(440, 0.05);
+        }
+
+        async function handleSpin() {
+            initAudio();
+            if(!isFreeSpinMode && balance < currentBet) { openTopup(); return; }
+
+            const btn = document.getElementById('spinBtn');
+            const msg = document.getElementById('msg');
+            btn.disabled = true;
+            cellEls.forEach(c => c.className = 'cell');
+
+            if(!isFreeSpinMode) {
+                balance -= currentBet;
+                jackpot += (currentBet * 0.05);
+                msg.innerText = "";
+            } else {
+                freeSpinsLeft--;
+                document.getElementById('fsLeft').innerText = freeSpinsLeft;
+                msg.innerText = "FREE SPINNING...";
+            }
+            updateUI();
+
+            // Animation
+            for(let i=0; i<15; i++) {
+                cellEls.forEach(c => c.innerText = symbols[Math.floor(Math.random()*6)].s);
+                playSnd(200 + (i*20), 0.05, 0.03);
+                await new Promise(r => setTimeout(r, 60));
+            }
+
+            // Real Result
+            const res = [];
+            for(let i=0; i<9; i++) {
+                const rand = Math.random() * 100;
+                let sum = 0, pick = symbols[0];
+                for(let s of symbols) { sum += s.w; if(rand <= sum) { pick = s; break; } }
+                res.push(pick);
+                cellEls[i].innerText = pick.s;
+            }
+
+            // Check Win
+            let winSum = 0;
+            let scatterCount = res.filter(x => x.s === '🌟').length;
+            const betPerLine = currentBet / 5;
+
+            paylines.forEach(line => {
+                if(res[line[0]].s === res[line[1]].s && res[line[1]].s === res[line[2]].s && res[line[0]].s !== '🌟') {
+                    line.forEach(idx => cellEls[idx].classList.add('win'));
+                    let mult = isFreeSpinMode ? 3 : 1; // ใน Free Spin คูณ 3 เท่า
+                    winSum += (betPerLine * res[line[0]].m) * mult;
+                }
+            });
+
+            // Check Scatter for Free Spins
+            if(scatterCount >= 3) {
+                res.forEach((s, i) => { if(s.s === '🌟') cellEls[i].classList.add('scatter'); });
+                if(!isFreeSpinMode) triggerFreeSpins();
+                else freeSpinsLeft += 5; // ได้ซ้อนเพิ่ม 5 รอบ
+                playSnd(800, 0.5, 0.2);
+            }
+
+            if(winSum > 0) {
+                balance += winSum;
+                if(isFreeSpinMode) totalFSWin += winSum;
+                msg.innerText = "WIN: +" + Math.floor(winSum).toLocaleString();
+                playSnd(600, 0.2);
+            }
+
+            updateUI();
+
+            // Auto Continue if in Free Spin Mode
+            if(isFreeSpinMode && freeSpinsLeft > 0) {
+                await new Promise(r => setTimeout(r, 1000));
+                handleSpin();
+            } else if(isFreeSpinMode && freeSpinsLeft === 0) {
+                endFreeSpins();
+            } else {
+                btn.disabled = false;
+            }
+        }
+
+        function triggerFreeSpins() {
+            isFreeSpinMode = true;
+            freeSpinsLeft = 10;
+            totalFSWin = 0;
+            document.body.classList.add('freespin-mode');
+            document.getElementById('wrapper').classList.add('freespin-active');
+            document.getElementById('fsCount').style.display = 'block';
+            document.getElementById('fsLeft').innerText = freeSpinsLeft;
+            document.getElementById('titleText').innerText = "🌟 FREE SPIN MODE 🌟";
+            document.getElementById('betControls').style.opacity = "0.3";
+            playSnd(1000, 0.5, 0.3);
+        }
+
+        function endFreeSpins() {
+            isFreeSpinMode = false;
+            document.body.classList.remove('freespin-mode');
+            document.getElementById('wrapper').classList.remove('freespin-active');
+            document.getElementById('fsCount').style.display = 'none';
+            document.getElementById('titleText').innerText = "ULTRA MATRIX";
+            document.getElementById('betControls').style.opacity = "1";
+            document.getElementById('msg').innerText = "FS TOTAL WIN: " + totalFSWin.toLocaleString();
+            document.getElementById('spinBtn').disabled = false;
+        }
+
+        function openTopup() { document.getElementById('modal').style.display = 'flex'; initAudio(); }
+        function closeTopup() { document.getElementById('modal').style.display = 'none'; }
+        function addMoney(v) { balance += v; updateUI(); closeTopup(); playSnd(1200, 0.1); }
+
+        updateUI();
+    </script>
+</body>
+</html>
